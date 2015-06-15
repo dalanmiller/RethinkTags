@@ -1,0 +1,99 @@
+.gram {
+
+	display: inline-block;
+	opacity:0;
+	padding-left: 0px;
+	padding-right: 0px;
+	
+}
+
+.gram_inner{
+	background-color:white;
+	/*margin-left:5px;*/
+	margin:3px;
+	height:100%;
+	padding:5px;
+	text-overflow:ellipsis;
+}
+
+.gram .user {
+
+	color:black;
+	font-size:11px;
+	font-weight:bold;
+
+}
+
+.gram .gram_body {
+	margin-top:3px;
+	height:55px;
+}
+
+.gram .gram_body .caption {
+	text-overflow:ellipsis;
+	height:40px;
+	max-height:40px;
+	word-wrap: break-word;
+	overflow: auto;
+}
+
+.gram .gram_img{
+	padding:5px;
+}
+
+.gram img {
+	max-width:100%;
+	max-height:100%;
+	border: black 1px;
+}
+
+.gram p {
+	color: dimgrey;
+	font-size:12px;
+	max-height:35px;
+	text-overflow:ellipsis;
+}
+
+.gram a{
+	display:block;
+	text-decoration:none;
+	color:black;
+}
+
+#hashtag {
+	color:white;
+}
+
+#hashtag input {
+	color:black;
+}
+
+#hashtag #subtitle {
+	font-size:20px;
+	color:whitesmoke;
+}
+
+#hashtag a{
+	color:#efbb1b;
+}
+
+body {
+
+
+	background-color:#194e5e;
+
+}
+
+
+body h1,h2,h3,h4,h5 {
+
+	color:white;
+	font-family:"Dancing Script";
+
+}
+
+h1 {
+
+	font-size:56px;
+
+}

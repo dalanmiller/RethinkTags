@@ -1,0 +1,55 @@
+{% extends "index.html" %}
+
+{% block body %}
+<div class="container">
+
+  <div class="row">
+    <div id="hashtag" class="col-md-4">
+      <div>
+        <h1>RethinkTags</h1>
+        <p>
+          This small application allows you to subscribe to an Instagram filter. As posts are created they are are saved to an instance of <a href="//www.rethinkdb.com">RethinkDB</a> and streamed immediately to your browser. 
+        </p>
+        <p id="subtitle">Subscribe to a hashtag</p>
+        <div>
+          #
+          <input id="tag" type="text"></div>
+      </div>
+        <div id="hashtag_list">
+        <ul>
+
+
+
+        </ul>
+        </div>
+    </div>
+    <div id="main" class="col-md-8">
+      {% for post in posts %}
+          {% if loop.first %} <div class="row">{% endif %}
+            <div class="col-xs-4 col-sm-4 col-md-4 gram">
+              <a href="{{post.link}}" target="_blank">
+                <div class="gram_inner">
+                  <div class="gram_img">
+                    <img src="{{post.images.low_resolution.url}}">
+                  </div>
+                  <div class="gram_body">
+                    <div class="caption">
+                      <p>{{post.caption.text | truncate(100)}}</p>
+                    </div>
+                    <div class="user">{{post.user.username}}</div>
+                  </div>
+                </div>
+              </a>
+            </div>
+            {% if loop.index is divisibleby(3) %}
+            </div><div class="row">
+            {% endif %}
+            {% if loop.last %}</div>{% endif %} 
+      {% endfor %}
+    </div>
+  </div>
+  <div class="row"></div>
+
+</div>
+<!-- /.container -->
+{% endblock %}
