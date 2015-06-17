@@ -1,27 +1,22 @@
-FROM ubuntu
+FROM rethinkdb
 MAINTAINER Daniel Alan Miller <dalanmiller@rethinkdb.com>
 
 #Get the main things
 RUN apt-get update
-RUN apt-get install -y build-essential wget curl 
-RUN echo "deb http://download.rethinkdb.com/apt `lsb_release -cs` main" \
-| sudo tee /etc/apt/sources.list.d/rethinkdb.list \
-&& wget -qO- http://download.rethinkdb.com/apt/pubkey.gpg \
-| sudo apt-key add -
-
-RUN apt-get update
-RUN apt-get install -y rethinkdb python-pip git supervisor
+RUN apt-get install -y git python-pip supervisor build-essential python-dev
 
 #Get RethinkTags
-RUN git clone https://github.com/dalanmiller/RethinkTags.git
-RUN cd RethinkTags
-RUN pip install -r RethinkTags/requirements.txt 
-RUN cp rethinktags.conf /etc/supervisor/conf.d/
+RUN mkdir -p /home/app
+#RUN git clone https://github.com/dalanmiller/RethinkTags.git /home/app
+ADD . /home/app
+RUN ls /home/app
+RUN pip install -Ur /home/app/requirements.txt
+
+#Move secret.py into app folder
+ADD ./secret.py /home/app/secret.py
+
+RUN ls /home/app
 
 #Run RethinkTags
-supervisorctl reread 
-supervisorctl update
-
-
-
-
+WORKDIR /home/app
+CMD ["python",  "/home/app/app.py"]

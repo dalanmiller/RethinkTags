@@ -2,6 +2,8 @@
 
 from jinja2 import Environment, FileSystemLoader
 from pprint import pprint
+import os
+print os.path.abspath(os.curdir)
 from secret import CLIENT_ID, CLIENT_SECRET, ACCESS_TOKEN
 from tornado.concurrent import Future
 import instagram
@@ -242,6 +244,7 @@ def emit_gram():
         for listener in listeners:
             listener.write_message(new_gram)
 
+
 @tornado.gen.coroutine
 def init_gram_feed():
     rethinkdb_conn = r.connect(
@@ -262,16 +265,8 @@ def init_gram_feed():
         .limit(9)\
         .run(conn)
 
-    count = 0
     while(yield posts.fetch_next()):
-
-        if count == 9:
-            break; 
-
-        yield posts.next() 
-        count+=1
-        
-
+        yield posts.next()
 
 class WSocketHandler(tornado.websocket.WebSocketHandler):
 
@@ -284,12 +279,17 @@ class WSocketHandler(tornado.websocket.WebSocketHandler):
 
         print "CONNECTION MADE FROM ", self.request.remote_ip 
 
-        posts = init_gram_feed()       
+        posts = init_gram_feed()     
 
-        print dir(posts)
+        posts.add_done_callback(self.write_callback)
+        
+        
+    def write_callback(self, messages):
 
-        for post in posts:
-            self.write_message(post)
+        print type(messages), dir(messages), messages.running(), messages.done(), messages.result()
+
+        for m in messages.result():
+            self.write(m)
 
         #Add to the user list 
         listeners.add(self)
