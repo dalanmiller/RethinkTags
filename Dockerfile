@@ -3,7 +3,7 @@ MAINTAINER Daniel Alan Miller <dalanmiller@rethinkdb.com>
 
 #Get the main things
 RUN apt-get update
-RUN apt-get install -y git build-essential python-dev && \
+RUN apt-get install -y git curl build-essential python-dev && \
 rm -rf /var/lib/apt/lists/* && \
 apt-get clean
 
