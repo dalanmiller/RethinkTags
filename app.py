@@ -3,12 +3,12 @@
 from jinja2 import Environment, FileSystemLoader
 from pprint import pprint
 import os
-print os.path.abspath(os.curdir)
 from secret import CLIENT_ID, CLIENT_SECRET, ACCESS_TOKEN
 from tornado.concurrent import Future
 import instagram
 import json
 import os
+import time
 import rethinkdb as r
 import sys
 import tornado.escape
@@ -19,16 +19,70 @@ import tornado.web
 import tornado.websocket
 import tornado.wsgi
 import urllib
-r.set_loop_type("tornado")
 
 template_env = Environment(loader=FileSystemLoader("templates"))
 
 INSTAGRAM_API_URL = "https://api.instagram.com/v1/"
-RETHINKDB_HOST = "localhost"
-RETHINKDB_PORT = 28015
+RETHINKDB_HOST = os.environ['RETHINKDB_1_PORT_28015_TCP_ADDR'] \
+    if 'RETHINKDB_1_PORT_28015_TCP_ADDR' in os.environ else "localhost"
+RETHINKDB_PORT = os.environ['RETHINKDB_1_PORT_28015_TCP_PORT'] \
+    if 'RETHINKDB_1_PORT_28015_TCP_PORT' in os.environ else 28015
 RETHINKDB_DB = "think_filter"
 REDIRECT_URI = "https://dalan.localtunnel.me/auth"
 CALLBACK_URI = "https://dalan.localtunnel.me/echo"
+
+#Setup the database and table
+conn = r.connect(RETHINKDB_HOST, RETHINKDB_PORT)
+
+try:
+    dbs = r.db_list().run(conn)
+    if 'think_filter' not in dbs:
+        r.db_create("think_filter").run(conn)
+    pass
+
+except r.errors.RqlRuntimeError as e:
+    sys.stderr.write("Failed to create db\n")
+    sys.stderr.write(str(e))
+    conn.close()
+    sys.exit(1)
+    pass
+
+try:
+
+    tables = r.db("think_filter").table_list().run(conn)
+    if "posts" not in tables:
+        r.db("think_filter")\
+            .table_create("posts")\
+            .run(conn)
+    pass
+except r.errors.RqlRuntimeError as e:
+    sys.stderr.write("Failed to create table 'posts'\n")
+    sys.stderr.write(str(e))
+    conn.close()
+    sys.exit(1)
+    pass
+
+
+try:
+    indexes = r.db("think_filter").table("posts").index_list().run(conn)
+    if "created_time" not in indexes:
+        r.db("think_filter")\
+            .table("posts")\
+            .index_create("created_time")\
+            .run(conn)
+    pass
+
+except r.errors.RqlRuntimeError as e:
+    sys.stderr.write("Failed to add index 'created_time' to table 'posts'\n")
+    sys.stderr.write(str(e))
+    conn.close()
+    sys.exit(1)
+    pass
+
+conn.close()
+
+#Change loop type to tornado
+r.set_loop_type("tornado")
 
 
 INSTA_CONFIG = {
@@ -40,29 +94,6 @@ INSTA_CONFIG = {
 
 
 insta_api = instagram.client.InstagramAPI(**INSTA_CONFIG)
-
-def rethinkdb_setup():
-
-    connection = r.connect(RETHINKDB_HOST, RETHINKDB_PORT)
-
-    try:
-        yield r.db_create("think_filter").run(connection)
-    except r.errors.RqlRuntimeError:
-        pass
-
-    try:
-        yield r.db("think_filter")\
-            .table_create("posts", primary_key="id")\
-            .run(connection)
-
-        # r.db("think_filter")\
-        #     .table_create("users", primary_key="username")\
-        #     .run(connection)
-
-    except r.errors.RqlRuntimeError:
-        pass
-    finally:
-        connection.close()
 
 class HomeHandler(tornado.web.RequestHandler):
 
@@ -195,9 +226,6 @@ class FilterPageHandler(tornado.web.RequestHandler):
 
         client.fetch(req)
 
-        self.finish()
-
-
     @tornado.web.asynchronous
     def head(self, path):
 
@@ -289,6 +317,7 @@ class WSocketHandler(tornado.websocket.WebSocketHandler):
         print type(messages), dir(messages), messages.running(), messages.done(), messages.result()
 
         for m in messages.result():
+
             self.write(m)
 
         #Add to the user list 
@@ -302,7 +331,7 @@ class WSocketHandler(tornado.websocket.WebSocketHandler):
 if __name__ == '__main__':
   
 
-  rethinkdb_setup()
+  
 
   current_dir = os.path.dirname(os.path.abspath(__file__))
   public_folder = os.path.join(current_dir, 'public')

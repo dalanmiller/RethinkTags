@@ -1,0 +1,13 @@
+app:
+  build: .
+  links:
+   - rethinkdb
+  ports:
+   - "10000:8000"
+rethinkdb:
+  image: rethinkdb
+  ports:
+   - "10001:8080"
+   - "10002:28015"
+   - "10003:29015"
+ 
