@@ -3,8 +3,12 @@ MAINTAINER Daniel Alan Miller <dalanmiller@rethinkdb.com>
 
 #Get the main things
 RUN apt-get update
-RUN apt-get install -y git python-pip build-essential python-dev && \
-rm -rf /var/lib/apt/lists/*
+RUN apt-get install -y git build-essential python-dev && \
+rm -rf /var/lib/apt/lists/* && \
+apt-get clean
+
+RUN curl https://bootstrap.pypa.io/get-pip.py | python
+RUN pip install -U pip
 
 #Get RethinkTags
 RUN mkdir -p /home/app
