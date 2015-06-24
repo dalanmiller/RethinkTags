@@ -3,7 +3,7 @@ app:
   links:
    - rethinkdb
   ports:
-   - "10000:8000"
+   - "80:8000"
 rethinkdb:
   image: rethinkdb
   ports:

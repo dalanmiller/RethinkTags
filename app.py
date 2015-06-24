@@ -20,13 +20,15 @@ import tornado.websocket
 import tornado.wsgi
 import urllib
 
+
+
 template_env = Environment(loader=FileSystemLoader("templates"))
 
 INSTAGRAM_API_URL = "https://api.instagram.com/v1/"
-RETHINKDB_HOST = os.environ['RETHINKDB_1_PORT_28015_TCP_ADDR'] \
-    if 'RETHINKDB_1_PORT_28015_TCP_ADDR' in os.environ else "localhost"
-RETHINKDB_PORT = os.environ['RETHINKDB_1_PORT_28015_TCP_PORT'] \
-    if 'RETHINKDB_1_PORT_28015_TCP_PORT' in os.environ else 28015
+RETHINKDB_HOST = os.environ['RETHINKDB_PORT_28015_TCP_ADDR'] \
+    if 'RETHINKDB_PORT_28015_TCP_ADDR' in os.environ else "localhost"
+RETHINKDB_PORT = os.environ['RETHINKDB_PORT_28015_TCP_PORT'] \
+    if 'RETHINKDB_PORT_28015_TCP_PORT' in os.environ else 28015
 RETHINKDB_DB = "think_filter"
 REDIRECT_URI = "https://dalan.localtunnel.me/auth"
 CALLBACK_URI = "https://dalan.localtunnel.me/echo"
