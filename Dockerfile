@@ -1,6 +1,15 @@
 FROM ubuntu
 MAINTAINER Daniel Alan Miller <dalanmiller@rethinkdb.com>
 
+#Edit the sources.list
+RUN ["echo", "-e", "deb mirror://mirrors.ubuntu.com/mirrors.txt trusty main restricted universe multiverse\
+deb mirror://mirrors.ubuntu.com/mirrors.txt trusty-updates main restricted universe multiverse\
+deb mirror://mirrors.ubuntu.com/mirrors.txt trusty-backports main restricted universe multiverse\
+deb mirror://mirrors.ubuntu.com/mirrors.txt trusty-security main restricted universe multiverse\
+", "|", "cat", "-", "/etc/apt/sources.list", ">", "/tmp/out", "&&", "mv", "/tmp/out", "/etc/apt/sources.list"]
+
+RUN head /etc/apt/sources.list
+
 #Get the main things
 RUN apt-get update
 RUN apt-get install -y git curl build-essential python-dev && \
