@@ -199,9 +199,7 @@ class FilterPageHandler(tornado.web.RequestHandler):
 
     @tornado.gen.coroutine
     def post(self, path):
-        
-        # try:
-            
+                    
         new_tag = self.request.arguments['filter'][0]
 
         #Break basically if we already have a subscription for that tag 
@@ -238,6 +236,7 @@ class FilterPageHandler(tornado.web.RequestHandler):
             )
 
         client.fetch(req)
+        self.finish()
 
     @tornado.web.asynchronous
     def head(self, path):
