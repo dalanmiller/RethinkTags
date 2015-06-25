@@ -40,46 +40,37 @@ try:
     dbs = r.db_list().run(conn)
     if 'think_filter' not in dbs:
         r.db_create("think_filter").run(conn)
-    pass
 
 except r.errors.RqlRuntimeError as e:
     sys.stderr.write("Failed to create db\n")
     sys.stderr.write(str(e))
     conn.close()
     sys.exit(1)
-    pass
 
 try:
-
     tables = r.db("think_filter").table_list().run(conn)
     if "posts" not in tables:
         r.db("think_filter")\
             .table_create("posts")\
             .run(conn)
-    pass
+
 except r.errors.RqlRuntimeError as e:
     sys.stderr.write("Failed to create table 'posts'\n")
     sys.stderr.write(str(e))
     conn.close()
     sys.exit(1)
-    pass
-
 
 try:
     indexes = r.db("think_filter").table("posts").index_list().run(conn)
+ 
     if "created_time" not in indexes:
-        r.db("think_filter")\
-            .table("posts")\
-            .index_create("created_time")\
-            .run(conn)
-    pass
+        print r.db("think_filter").table("posts").index_create("created_time").run(conn)
 
 except r.errors.RqlRuntimeError as e:
     sys.stderr.write("Failed to add index 'created_time' to table 'posts'\n")
     sys.stderr.write(str(e))
     conn.close()
     sys.exit(1)
-    pass
 
 conn.close()
 
