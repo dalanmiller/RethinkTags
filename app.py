@@ -30,8 +30,8 @@ RETHINKDB_HOST = os.environ['RETHINKDB_PORT_28015_TCP_ADDR'] \
 RETHINKDB_PORT = os.environ['RETHINKDB_PORT_28015_TCP_PORT'] \
     if 'RETHINKDB_PORT_28015_TCP_PORT' in os.environ else 28015
 RETHINKDB_DB = "think_filter"
-REDIRECT_URI = "https://dalan.localtunnel.me/auth"
-CALLBACK_URI = "https://dalan.localtunnel.me/echo"
+REDIRECT_URI = "http://rethinktags.dalanmiller.com/auth"
+CALLBACK_URI = "http://rethinktags.dalanmiller.com/echo"
 
 #Setup the database and table
 conn = r.connect(RETHINKDB_HOST, RETHINKDB_PORT)
