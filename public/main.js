@@ -41,7 +41,7 @@ $(".gram").transition({"opacity":100});
       });
 
 
-    var ws = new WebSocket('ws://10.0.1.37:8000/ws');
+    var ws = new WebSocket('ws:///ws');
 
     //Compile the template
     var source   = $("#gram-template").html();
