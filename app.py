@@ -154,7 +154,7 @@ class GramHandler(tornado.web.RequestHandler):
         self.write(self.get_argument("hub.challenge"))
         self.finish()
 
-    @tornado.web.asynchronous
+    @tornado.gen.coroutine
     def post(self):
 
         update_json = tornado.escape.json_decode(self.request.body)
@@ -167,18 +167,29 @@ class GramHandler(tornado.web.RequestHandler):
                 url= INSTAGRAM_API_URL + "tags/" + update['object_id'] + "/media/recent?access_token=" + ACCESS_TOKEN 
             )
 
-            client.fetch(req, callback=self.on_response)
+            repsonse = yield client.fetch(req)
 
-    @tornado.gen.coroutine
-    def on_response(self, response):
+            grams = tornado.escape.json_decode(response.body)['data']
 
-        grams = tornado.escape.json_decode(response.body)['data']
+            connection = r.connect(RETHINKDB_HOST, RETHINKDB_PORT, RETHINKDB_DB)
 
-        connection = r.connect(RETHINKDB_HOST, RETHINKDB_PORT, RETHINKDB_DB)
-
-        conn = yield connection
+            conn = yield connection
     
-        yield r.table("posts").insert(grams, conflict="error").run(conn)
+            yield r.table("posts").insert(grams, conflict="error").run(conn)
+
+        self.finish()
+        
+
+    # @tornado.gen.coroutine
+    # def on_response(self, response):
+
+        # grams = tornado.escape.json_decode(response.body)['data']
+
+        # connection = r.connect(RETHINKDB_HOST, RETHINKDB_PORT, RETHINKDB_DB)
+
+        # conn = yield connection
+    
+        # yield r.table("posts").insert(grams, conflict="error").run(conn)
         
         
 class FilterPageHandler(tornado.web.RequestHandler):
@@ -342,7 +353,6 @@ if __name__ == '__main__':
     ('/', HomeHandler),
     (r'/echo', GramHandler),
     (r'/ws', WSocketHandler),
-    # (r'/auth', AuthHandler),
     (r'/filter(.*)', FilterPageHandler),
     (r'/public/(.*)', tornado.web.StaticFileHandler, { 'path': public_folder }),
     # ('.*', tornado.web.FallbackHandler, dict(fallback=wsgi_app)),
