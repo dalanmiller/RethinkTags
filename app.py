@@ -189,17 +189,17 @@ class FilterPageHandler(tornado.web.RequestHandler):
             if new_tag == sub["object_id"]:
                 self.finish()
 
-
         query_params = dict(
-            client_id = CLIENT_ID,
-            client_secret = CLIENT_SECRET,
-            verify_token = str(hash(new_tag))
+            client_id=CLIENT_ID,
+            client_secret=CLIENT_SECRET,
+            verify_token=str(hash(new_tag))
             )
 
         body = urllib.urlencode(dict(
             aspect="media",
             object="tag",
-            object_id=new_tag
+            object_id=new_tag,
+            callback_url=CALLBACK_URI
             ))
 
         url="https://api.instagram.com/v1/subscriptions?%s" % urllib.urlencode(query_params)

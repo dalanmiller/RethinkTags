@@ -182,7 +182,7 @@ window.setInterval(function() {
       rows.slice(8).remove();
     }
   }
-}, 400);
+}, 500);
 
 ws.onerror = function(ev) {
   console.log(ev)
