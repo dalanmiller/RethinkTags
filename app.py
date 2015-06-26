@@ -35,6 +35,7 @@ CALLBACK_URI = "http://rethinktags.dalanmiller.com/echo"
 
 #Setup the database and table
 conn = r.connect(RETHINKDB_HOST, RETHINKDB_PORT)
+print conn
 
 try:
     dbs = r.db_list().run(conn)
@@ -44,7 +45,6 @@ try:
 except r.errors.RqlRuntimeError as e:
     sys.stderr.write("Failed to create db\n")
     sys.stderr.write(str(e))
-    conn.close()
     sys.exit(1)
 
 try:
@@ -57,19 +57,17 @@ try:
 except r.errors.RqlRuntimeError as e:
     sys.stderr.write("Failed to create table 'posts'\n")
     sys.stderr.write(str(e))
-    conn.close()
     sys.exit(1)
 
 try:
-    indexes = r.db("think_filter").table("posts").index_list().run(conn)
+    indexes = list(r.db("think_filter").table("posts").index_list().run(conn))
  
-    if "created_time" or "time_created" not in indexes:
+    if "created_time" not in indexes:
         print r.db("think_filter").table("posts").index_create("created_time").run(conn)
 
 except r.errors.RqlRuntimeError as e:
     sys.stderr.write("Failed to add index 'created_time' to table 'posts'\n")
     sys.stderr.write(str(e))
-    conn.close()
     sys.exit(1)
 
 conn.close()
