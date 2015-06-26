@@ -63,7 +63,7 @@ except r.errors.RqlRuntimeError as e:
 try:
     indexes = r.db("think_filter").table("posts").index_list().run(conn)
  
-    if "created_time" not in indexes:
+    if "created_time" or "time_created" not in indexes:
         print r.db("think_filter").table("posts").index_create("created_time").run(conn)
 
 except r.errors.RqlRuntimeError as e:
@@ -296,8 +296,7 @@ def init_gram_feed():
         .limit(9)\
         .run(conn)
 
-    while(yield posts.fetch_next()):
-        yield posts.next()
+    raise tornado.gen.Return(posts)
 
 class WSocketHandler(tornado.websocket.WebSocketHandler):
 
