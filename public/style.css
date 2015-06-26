@@ -60,6 +60,17 @@
 	color:black;
 }
 
+#hashtag_list {
+
+	margin-top : 10px;
+
+}
+
+#hashtag_list button{
+	margin-top:3px;
+	margin-left:3px;
+}
+
 #hashtag {
 	color:white;
 }

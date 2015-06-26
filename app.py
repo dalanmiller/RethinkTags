@@ -109,7 +109,6 @@ class HomeHandler(tornado.web.RequestHandler):
                 "created_time",
                 "link",
                 {"caption":{"text":True}})\
-            .skip(9)\
             .limit(9)\
             .run(conn)
 
@@ -124,9 +123,13 @@ class HomeHandler(tornado.web.RequestHandler):
         
         home_template = template_env.get_template("home.html")
 
+        subscriptions_raw = insta_api.list_subscriptions()
+        subscriptions = [x['object_id'] for x in subscriptions_raw['data']]
+
         self.write(home_template.render(
             auth_url = insta_api.get_authorize_url(),
-            posts = output_posts
+            posts = output_posts,
+            subscriptions = subscriptions
             ))
 
         self.finish()
@@ -196,8 +199,6 @@ class FilterPageHandler(tornado.web.RequestHandler):
         # and add a new one.
         subs = insta_api.list_subscriptions()
 
-        pprint(subs)
-
         if len(subs['data']) >= 25:
             insta_api.delete_subscriptions(subs[0]['subscription_id'])
 
@@ -225,6 +226,46 @@ class FilterPageHandler(tornado.web.RequestHandler):
             )
 
         client.fetch(req)
+        self.finish()
+
+    @tornado.gen.coroutine
+    def delete(self, path):
+
+        print path
+        tag = path.split("/")[-1]
+
+        subscriptions_raw = insta_api.list_subscriptions()
+
+        sub_id = None
+        for sub in subscriptions_raw['data']:
+            if sub['object_id'] == tag:
+                sub_id = sub['id']
+
+        #If id hasn't been assigned the subscription is not in the list
+        if sub_id == None:
+            self.finish() 
+
+        client = tornado.httpclient.AsyncHTTPClient()
+
+        query_params = dict(
+            client_secret=CLIENT_SECRET,
+            client_id=CLIENT_ID,
+            id=sub_id
+        )
+
+        url = "https://api.instagram.com/v1/subscriptions?{}".format(urllib.urlencode(query_params))
+
+        print url
+
+        req = tornado.httpclient.HTTPRequest(
+            url=url,
+            method="DELETE"
+        )
+
+        response = yield client.fetch(req)
+
+        print response
+
         self.finish()
 
     @tornado.web.asynchronous

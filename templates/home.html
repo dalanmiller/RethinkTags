@@ -15,13 +15,13 @@
           #
           <input id="tag" type="text"></div>
       </div>
-        <div id="hashtag_list">
-        <ul>
+        <form id="hashtag_list">
+        {% for sub in subscriptions %}
 
+          <button type="button" class="btn btn-default"><span class="glyphicon glyphicon-remove-circle" aria-hidden="true"></span> {{sub}}</button>
 
-
-        </ul>
-        </div>
+        {% endfor %}
+        </form>
     </div>
     <div id="main" class="col-md-8">
       {% for post in posts %}
