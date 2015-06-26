@@ -61,7 +61,7 @@ except r.errors.RqlRuntimeError as e:
 
 try:
     indexes = list(r.db("think_filter").table("posts").index_list().run(conn))
- 
+
     if "created_time" not in indexes:
         print r.db("think_filter").table("posts").index_create("created_time").run(conn)
 
@@ -77,10 +77,10 @@ r.set_loop_type("tornado")
 
 
 INSTA_CONFIG = {
-    
+
     "client_id": CLIENT_ID,
     "client_secret": CLIENT_SECRET,
-    "redirect_uri": REDIRECT_URI 
+    "redirect_uri": REDIRECT_URI
 }
 
 
@@ -91,11 +91,10 @@ class HomeHandler(tornado.web.RequestHandler):
     @tornado.gen.coroutine
     def prepare(self):
         self.rethinkdb_conn = r.connect(
-            RETHINKDB_HOST, 
-            RETHINKDB_PORT, 
+            RETHINKDB_HOST,
+            RETHINKDB_PORT,
             RETHINKDB_DB)
 
-   
     @tornado.gen.coroutine
     def get(self):
 
@@ -104,8 +103,8 @@ class HomeHandler(tornado.web.RequestHandler):
         posts = yield r.table("posts")\
             .order_by(index=r.desc("created_time"))\
             .pluck(
-                {"images":{"low_resolution":{"url":True}}}, 
-                {"user":{"username":True}}, 
+                {"images":{"low_resolution":{"url":True}}},
+                {"user":{"username":True}},
                 "created_time",
                 "link",
                 {"caption":{"text":True}})\
@@ -116,11 +115,11 @@ class HomeHandler(tornado.web.RequestHandler):
         while(yield posts.fetch_next()):
 
             if len(output_posts) >= 9:
-                break; 
+                break;
 
-            p = yield posts.next() 
+            p = yield posts.next()
             output_posts.append(p)
-        
+
         home_template = template_env.get_template("home.html")
 
         subscriptions_raw = insta_api.list_subscriptions()
@@ -132,20 +131,17 @@ class HomeHandler(tornado.web.RequestHandler):
             subscriptions = subscriptions
             ))
 
-        self.finish()
-    
-    
+
 class GramHandler(tornado.web.RequestHandler):
     """
     Route which will handle the incoming post requests sent to this URL and put the Instagram post into RethinkDB
     """
 
-    @tornado.web.asynchronous
+    @tornado.gen.coroutine
     def get(self):
 
         self.write(self.get_argument("hub.challenge"))
-        self.finish()
-
+    
     @tornado.gen.coroutine
     def post(self):
 
@@ -154,9 +150,9 @@ class GramHandler(tornado.web.RequestHandler):
         client = tornado.httpclient.AsyncHTTPClient()
 
         for update in update_json:
-    
+
             req = tornado.httpclient.HTTPRequest(
-                url= INSTAGRAM_API_URL + "tags/" + update['object_id'] + "/media/recent?access_token=" + ACCESS_TOKEN 
+                url= INSTAGRAM_API_URL + "tags/" + update['object_id'] + "/media/recent?access_token=" + ACCESS_TOKEN
             )
 
             response = yield client.fetch(req)
@@ -166,35 +162,22 @@ class GramHandler(tornado.web.RequestHandler):
             connection = r.connect(RETHINKDB_HOST, RETHINKDB_PORT, RETHINKDB_DB)
 
             conn = yield connection
-    
+
             yield r.table("posts").insert(grams, conflict="error").run(conn)
 
-        self.finish()
-        
 
-    # @tornado.gen.coroutine
-    # def on_response(self, response):
 
-        # grams = tornado.escape.json_decode(response.body)['data']
-
-        # connection = r.connect(RETHINKDB_HOST, RETHINKDB_PORT, RETHINKDB_DB)
-
-        # conn = yield connection
-    
-        # yield r.table("posts").insert(grams, conflict="error").run(conn)
-        
-        
 class FilterPageHandler(tornado.web.RequestHandler):
     """
-    Redo
+    TO DO
     """
 
     @tornado.gen.coroutine
     def post(self, path):
-                    
+
         new_tag = self.request.arguments['filter'][0]
 
-        #Break basically if we already have a subscription for that tag 
+        #Break basically if we already have a subscription for that tag
         # or if we already have ~25 subscriptions remove the last one
         # and add a new one.
         subs = insta_api.list_subscriptions()
@@ -206,27 +189,37 @@ class FilterPageHandler(tornado.web.RequestHandler):
             if new_tag == sub["object_id"]:
                 self.finish()
 
-        client = tornado.httpclient.AsyncHTTPClient()
 
-        query_params = dict(    
+        query_params = dict(
             client_id = CLIENT_ID,
             client_secret = CLIENT_SECRET,
             verify_token = str(hash(new_tag))
             )
 
+        body = urllib.urlencode(dict(
+            aspect="media",
+            object="tag",
+            object_id=new_tag
+            ))
+
+        url="https://api.instagram.com/v1/subscriptions?%s" % urllib.urlencode(query_params)
+
+        print url, new_tag, body
+
+        client = tornado.httpclient.AsyncHTTPClient()
+
         req = tornado.httpclient.HTTPRequest(
-            url="https://api.instagram.com/v1/subscriptions?%s" % urllib.urlencode(query_params),
+            url=url,
             method="POST",
-            body = urllib.urlencode(dict(
-                aspect="media",
-                callback_url=CALLBACK_URI,
-                object="tag",
-                object_id=new_tag
-                ))
+            body=body
             )
 
-        client.fetch(req)
-        self.finish()
+        def print_all(x):
+            print x
+            print x.error
+
+        response = yield client.fetch(req, print_all)
+        print response
 
     @tornado.gen.coroutine
     def delete(self, path):
@@ -243,7 +236,7 @@ class FilterPageHandler(tornado.web.RequestHandler):
 
         #If id hasn't been assigned the subscription is not in the list
         if sub_id == None:
-            self.finish() 
+            self.finish()
 
         client = tornado.httpclient.AsyncHTTPClient()
 
@@ -266,9 +259,7 @@ class FilterPageHandler(tornado.web.RequestHandler):
 
         print response
 
-        self.finish()
-
-    @tornado.web.asynchronous
+    @tornado.gen.coroutine
     def head(self, path):
 
         client = tornado.httpclient.AsyncHTTPClient()
@@ -286,24 +277,22 @@ class FilterPageHandler(tornado.web.RequestHandler):
 
         client.fetch(req)
 
-        self.finish()
-
 listeners = set()
 
 @tornado.gen.coroutine
 def emit_gram():
 
     conn = yield r.connect(
-        RETHINKDB_HOST, 
-        RETHINKDB_PORT, 
+        RETHINKDB_HOST,
+        RETHINKDB_PORT,
         RETHINKDB_DB)
 
     feed = yield r.table("posts")\
         .pluck(
-            {"images":{"low_resolution":{"url":True}}}, 
-            {"user":{"username":True}}, 
+            {"images":{"low_resolution":{"url":True}}},
+            {"user":{"username":True}},
             "created_time",
-            "link", 
+            "link",
             {"caption":{"text":True}})\
         .changes(include_states=False)\
         .run(conn)
@@ -323,9 +312,9 @@ class WSocketHandler(tornado.websocket.WebSocketHandler):
 
         self.stream.set_nodelay(True)
 
-        print "CONNECTION MADE FROM ", self.request.remote_ip 
+        print "CONNECTION MADE FROM ", self.request.remote_ip
 
-        #Add to the user list 
+        #Add to the user list
         listeners.add(self)
 
     def on_close(self):
@@ -333,9 +322,9 @@ class WSocketHandler(tornado.websocket.WebSocketHandler):
             listeners.remove(self)
 
 if __name__ == '__main__':
-  
 
-  
+
+
 
   current_dir = os.path.dirname(os.path.abspath(__file__))
   public_folder = os.path.join(current_dir, 'public')
@@ -348,7 +337,7 @@ if __name__ == '__main__':
     (r'/public/(.*)', tornado.web.StaticFileHandler, { 'path': public_folder }),
     # ('.*', tornado.web.FallbackHandler, dict(fallback=wsgi_app)),
 
-  ], 
+  ],
     debug=True,
     cookie_secret=str(os.urandom(30))
   )
@@ -356,7 +345,3 @@ if __name__ == '__main__':
   server.listen(8000)
   tornado.ioloop.IOLoop.current().add_callback(emit_gram)
   tornado.ioloop.IOLoop.instance().start()
-
-
-
-
