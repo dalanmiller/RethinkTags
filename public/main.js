@@ -70,61 +70,61 @@ var removeTag = function(e) {
 $("#hashtag_list").on("click", "button", removeTag);
 
 
-//Create the websocket to the location host
-var ws = new WebSocket('ws://' + window.location.host + '/ws');
+// //Create the websocket to the location host
+// var ws = new WebSocket('ws://' + window.location.host + '/ws');
 
-//Compile the template
-var source = $("#gram-template").html();
-var template = Handlebars.compile(source);
+// //Compile the template
+// var source = $("#gram-template").html();
+// var template = Handlebars.compile(source);
 
-//Save the #main element since it will be accessed frequently
-var main = $("#main");
+// //Save the #main element since it will be accessed frequently
+// var main = $("#main");
 
-//Create a queue of new posts to add to the page every second.
-var gram_queue = []
+// //Create a queue of new posts to add to the page every second.
+// var gram_queue = []
 
-ws.onmessage = function(ev) {
+// ws.onmessage = function(ev) {
 
-  //Parse the JSON received from the server
-  var json = JSON.parse(ev.data);
+//   //Parse the JSON received from the server
+//   var json = JSON.parse(ev.data);
 
-  //Preload the image
-  var i = new Image();
-  i.src = json.new_val.images.low_resolution.url;
+//   //Preload the image
+//   var i = new Image();
+//   i.src = json.new_val.images.low_resolution.url;
 
-  //Render the template
-  var html = template(json);
+//   //Render the template
+//   var html = template(json);
 
-  gram_queue.push(html);
-};
+//   gram_queue.push(html);
+// };
 
-window.setInterval(function() {
+// window.setInterval(function() {
 
-  if (gram_queue.length > 0) {
+//   if (gram_queue.length > 0) {
 
-    if (main.find(".row:first").children().length == 3) {
-      main.prepend("<div class='row'></div>");
-    }
+//     if (main.find(".row:first").children().length == 3) {
+//       main.prepend("<div class='row'></div>");
+//     }
 
-    //Get the front item off the gram queue
-    var rendered_gram = gram_queue.shift();
+//     //Get the front item off the gram queue
+//     var rendered_gram = gram_queue.shift();
 
-    //Append the new gram
-    var new_gram = main.find(".row:first").append(rendered_gram);
+//     //Append the new gram
+//     var new_gram = main.find(".row:first").append(rendered_gram);
 
-    //Fade it in
-    new_gram.find(".gram:last").transition({
-      "opacity": 100
-    });
+//     //Fade it in
+//     new_gram.find(".gram:last").transition({
+//       "opacity": 100
+//     });
 
-    //Clean up the list
-    var rows = $("#main .row");
-    if (rows.length > 8) {
-      console.log("Cleaning up rows you cannot see!");
-      rows.slice(8).remove();
-    }
-  }
-}, 600);
+//     //Clean up the list
+//     var rows = $("#main .row");
+//     if (rows.length > 8) {
+//       console.log("Cleaning up rows you cannot see!");
+//       rows.slice(8).remove();
+//     }
+//   }
+// }, 600);
 
 
 var ws = new WebSocket('ws://' + window.location.host + '/ws');
