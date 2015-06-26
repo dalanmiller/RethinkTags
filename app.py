@@ -273,29 +273,6 @@ def emit_gram():
         for listener in listeners:
             listener.write_message(new_gram)
 
-
-@tornado.gen.coroutine
-def init_gram_feed():
-    rethinkdb_conn = r.connect(
-            RETHINKDB_HOST, 
-            RETHINKDB_PORT, 
-            RETHINKDB_DB)
-
-    conn = yield rethinkdb_conn
-
-    posts = yield r.table("posts")\
-        .order_by(index=r.desc("created_time"))\
-        .pluck(
-            {"images":{"low_resolution":{"url":True}}}, 
-            {"user":{"username":True}}, 
-            "created_time",
-            "link",
-            {"caption":{"text":True}})\
-        .limit(9)\
-        .run(conn)
-
-    raise tornado.gen.Return(posts)
-
 class WSocketHandler(tornado.websocket.WebSocketHandler):
 
     def check_origin(self, origin):
@@ -307,22 +284,8 @@ class WSocketHandler(tornado.websocket.WebSocketHandler):
 
         print "CONNECTION MADE FROM ", self.request.remote_ip 
 
-        posts = init_gram_feed()     
-
-        posts.add_done_callback(self.write_callback)
-        
-        
-    def write_callback(self, messages):
-
-        print type(messages), dir(messages), messages.running(), messages.done(), messages.result()
-
-        for m in messages.result():
-
-            self.write(m)
-
         #Add to the user list 
         listeners.add(self)
-
 
     def on_close(self):
         if self in listeners:
