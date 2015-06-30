@@ -20,8 +20,6 @@ import tornado.websocket
 import tornado.wsgi
 import urllib
 
-
-
 template_env = Environment(loader=FileSystemLoader("templates"))
 
 INSTAGRAM_API_URL = "https://api.instagram.com/v1/"
@@ -338,7 +336,6 @@ if __name__ == '__main__':
     # ('.*', tornado.web.FallbackHandler, dict(fallback=wsgi_app)),
 
   ],
-    debug=True,
     cookie_secret=str(os.urandom(30))
   )
   server = tornado.httpserver.HTTPServer(tornado_app)
