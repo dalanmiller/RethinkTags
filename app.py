@@ -19,8 +19,6 @@ import tornado.websocket
 import tornado.wsgi
 import urllib
 
-
-
 template_env = Environment(loader=FileSystemLoader("templates"))
 
 INSTAGRAM_API_URL = "https://api.instagram.com/v1/"
