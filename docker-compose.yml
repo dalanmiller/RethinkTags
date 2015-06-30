@@ -6,8 +6,10 @@ app:
    - "3000:8000"
   environment:
    - VIRTUAL_HOST=rethinktags.dalanmiller.com
+  restart: always
 
 rethinkdb:
+  restart: always
   image: rethinkdb
   ports:
    - "10001:8080"
