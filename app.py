@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-
 from jinja2 import Environment, FileSystemLoader
 from pprint import pprint
 import os
@@ -33,9 +32,10 @@ RETHINKDB_DB = "think_filter"
 REDIRECT_URI = "http://rethinktags.dalanmiller.com/auth"
 CALLBACK_URI = "http://rethinktags.dalanmiller.com/echo"
 
+time.sleep(3)
+
 #Setup the database and table
 conn = r.connect(RETHINKDB_HOST, RETHINKDB_PORT)
-print conn
 
 try:
     dbs = r.db_list().run(conn)
@@ -59,16 +59,6 @@ except r.errors.RqlRuntimeError as e:
     sys.stderr.write(str(e))
     sys.exit(1)
 
-try:
-    indexes = list(r.db("think_filter").table("posts").index_list().run(conn))
-
-    if "created_time" not in indexes:
-        print r.db("think_filter").table("posts").index_create("created_time").run(conn)
-
-except r.errors.RqlRuntimeError as e:
-    sys.stderr.write("Failed to add index 'created_time' to table 'posts'\n")
-    sys.stderr.write(str(e))
-    sys.exit(1)
 
 conn.close()
 
@@ -204,8 +194,6 @@ class FilterPageHandler(tornado.web.RequestHandler):
 
         url="https://api.instagram.com/v1/subscriptions?%s" % urllib.urlencode(query_params)
 
-        print url, new_tag, body
-
         client = tornado.httpclient.AsyncHTTPClient()
 
         req = tornado.httpclient.HTTPRequest(
@@ -214,17 +202,11 @@ class FilterPageHandler(tornado.web.RequestHandler):
             body=body
             )
 
-        def print_all(x):
-            print x
-            print x.error
-
-        response = yield client.fetch(req, print_all)
-        print response
+        response = yield client.fetch(req)
 
     @tornado.gen.coroutine
     def delete(self, path):
 
-        print path
         tag = path.split("/")[-1]
 
         subscriptions_raw = insta_api.list_subscriptions()
@@ -248,16 +230,12 @@ class FilterPageHandler(tornado.web.RequestHandler):
 
         url = "https://api.instagram.com/v1/subscriptions?{}".format(urllib.urlencode(query_params))
 
-        print url
-
         req = tornado.httpclient.HTTPRequest(
             url=url,
             method="DELETE"
         )
 
         response = yield client.fetch(req)
-
-        print response
 
     @tornado.gen.coroutine
     def head(self, path):
@@ -281,27 +259,31 @@ listeners = set()
 
 @tornado.gen.coroutine
 def emit_gram():
+    while True:
+        try:
+            conn = yield r.connect(
+       		 RETHINKDB_HOST,
+        	 RETHINKDB_PORT,
+        	 RETHINKDB_DB)
 
-    conn = yield r.connect(
-        RETHINKDB_HOST,
-        RETHINKDB_PORT,
-        RETHINKDB_DB)
-
-    feed = yield r.table("posts")\
-        .pluck(
+            feed = yield r.table("posts")\
+        	.pluck(
             {"images":{"low_resolution":{"url":True}}},
             {"user":{"username":True}},
             "created_time",
             "link",
             {"caption":{"text":True}})\
-        .changes(include_states=False)\
-        .run(conn)
+        	.changes(include_states=False)\
+        	.run(conn)
 
-    #While "forever"
-    while (yield feed.fetch_next()):
-        new_gram = yield feed.next()
-        for listener in listeners:
-            listener.write_message(new_gram)
+    	#While "forever"
+            while (yield feed.fetch_next()):
+                new_gram = yield feed.next()
+                for listener in listeners:
+            	    listener.write_message(new_gram)
+        except:
+            pass
+
 
 class WSocketHandler(tornado.websocket.WebSocketHandler):
 
@@ -311,8 +293,6 @@ class WSocketHandler(tornado.websocket.WebSocketHandler):
     def open(self):
 
         self.stream.set_nodelay(True)
-
-        print "CONNECTION MADE FROM ", self.request.remote_ip
 
         #Add to the user list
         listeners.add(self)
@@ -338,7 +318,6 @@ if __name__ == '__main__':
     # ('.*', tornado.web.FallbackHandler, dict(fallback=wsgi_app)),
 
   ],
-    debug=True,
     cookie_secret=str(os.urandom(30))
   )
   server = tornado.httpserver.HTTPServer(tornado_app)
