@@ -57,6 +57,17 @@ except r.errors.RqlRuntimeError as e:
     sys.stderr.write(str(e))
     sys.exit(1)
 
+try:
+    
+    indexes = r.db("think_filter").table("posts").index_list().run(conn)
+    if "created_time" not in indexes:
+        r.db("think_filter").table("posts").index_create("created_time").run(conn)
+
+except r.errors.RqlRuntimeError as e:
+    sys.stderr.write("Failed to create the fooking index")
+    sys.stderr.write(str(e))
+    sys.exit(1)
+
 
 conn.close()
 

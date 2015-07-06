@@ -160,7 +160,7 @@ window.setInterval(function() {
 
   if (gram_queue.length > 0) {
 
-    if (main.find(".row:first").children().length == 3) {
+    if ( main.find(".row:first").length == 0 || main.find(".row:first").children().length == 3) {
       main.prepend("<div class='row'></div>");
     }
 
